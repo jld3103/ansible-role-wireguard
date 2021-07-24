@@ -3,13 +3,32 @@
 # Copyright (C) 2021 Steve Fan
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+- name: Test for raspberry pi /proc/cpuinfo
+  command: grep -E "Raspberry Pi|BCM2708|BCM2709|BCM2835|BCM2836" /proc/cpuinfo
+  register: grep_cpuinfo_raspberrypi
+  failed_when: false
+  changed_when: false
+
+- name: Test for raspberry pi /proc/device-tree/model
+  command: grep -E "Raspberry Pi" /proc/device-tree/model
+  register: grep_device_tree_model_raspberrypi
+  failed_when: false
+  changed_when: false
+
+- name: Set raspberry_pi fact to true
+  set_fact:
+    raspberry_pi: true
+  when:
+    grep_cpuinfo_raspberrypi.rc == 0 or grep_device_tree_model_raspberrypi.rc == 0
+
 - include_tasks:
-    file: "setup-debian-raspbian.yml"
+    file: "setup-debian-raspios.yml"
     apply:
       tags:
         - wg-install
-  when: ansible_lsb.id is defined and ansible_lsb.id == "Raspbian"
-  register: wireguard__register_raspbian_setup
+  when:
+    - raspberry_pi|default(false)
+  register: wireguard__register_raspios_setup
 
 - include_tasks:
     file: "setup-debian-pve-variant.yml"
@@ -25,5 +44,5 @@
       tags:
         - wg-install
   when:
-    - wireguard__register_raspbian_setup is skipped
+    - wireguard__register_raspios_setup is skipped
     - wireguard__register_pve_variant_setup is skipped
