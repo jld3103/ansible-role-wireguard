@@ -141,6 +141,12 @@
   tags:
     - wg-config
 
+- name: Down WireGuard interface
+  command: "wg-quick down {{ wireguard_interface }}"
+
+- name: Up WireGuard interface
+  command: "wg-quick up {{ wireguard_interface }}"
+
 # Service [[[1
 - name: Start and enable WireGuard service
   service:
